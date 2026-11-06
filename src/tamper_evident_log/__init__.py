@@ -1,21 +1,34 @@
-"""Append-only audit log chained by SHA-256 or HMAC-SHA256 over a restricted canonical JSON, with ordered integrity checks and checkpoint anchoring"""
+"""Append-only audit log chained by SHA-256 or HMAC-SHA256 over a restricted canonical JSON.
+
+Threat model (see ``docs/SECURITY.md`` and ``docs/FORMAT.md``).
+
+Defended: in-place edits, deletion, reordering, forgery without the key (keyed mode),
+algorithm downgrade, truncation when an external :class:`Checkpoint` is verified, and torn
+writes (reported as ``corrupt_line``; appending to a corrupt tail is refused).
+
+Not defended: an attacker who holds the key; truncation or a full rewrite without an
+external checkpoint; rollback of the log and the checkpoint together; confidentiality (data
+is stored in clear text); concurrent writers (one writer per log, no locking).
+"""
 
 from __future__ import annotations
 
-__all__ = ["__version__", "normalize"]
+from .errors import AuditLogError, CorruptLogError
+from .log import AuditLog
+from .model import Checkpoint, CorruptLine, Entry, VerificationReport
+from .store import JsonlFileStore, LogStore
+
+__all__ = [
+    "AuditLog",
+    "AuditLogError",
+    "Checkpoint",
+    "CorruptLine",
+    "CorruptLogError",
+    "Entry",
+    "JsonlFileStore",
+    "LogStore",
+    "VerificationReport",
+    "__version__",
+]
 
 __version__ = "0.1.0"
-
-
-def normalize(value: str) -> str:
-    """Return ``value`` trimmed and lower-cased.
-
-    Placeholder API created by the template: replace it with the utility's real behavior.
-
-    Raises:
-        ValueError: if ``value`` is empty or only whitespace.
-    """
-    cleaned = value.strip()
-    if not cleaned:
-        raise ValueError("value must not be empty")
-    return cleaned.lower()
